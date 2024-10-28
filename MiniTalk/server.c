@@ -1,43 +1,45 @@
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <signal.h>
+#include "minitalk.h"
 
 void	ft_btoa(int sig)
 {
-	static int	bit;
-	static int	byte;
+	static unsigned char	buffer[BUFFER_SIZE];
+	static size_t			size = 0;
+	static int				bit = 0;
+	static int				byte = 0;
 
-    byte = 0;
-    bit = 0;
 	if (sig == SIGUSR1)
 		byte |= (0x01 << bit);
 	bit++;
 	if (bit == 8)
 	{
-		ft_printf("%c", byte);
-		bit = 0;    // reseted for the next character/byte
+		if (byte == '\0')
+		{
+			buffer[size] = '\0';
+			ft_printf("Received message: %s\n", buffer);
+			size = 0;
+		}
+		else
+		{
+			if (size < BUFFER_SIZE - 1) // reserve space for the '\0'
+			{
+				buffer[size] = byte; // store the byte in the buffer
+				(size)++;
+			}
+		}
+		bit = 0;
 		byte = 0;
 	}
 }
 
-int main(int argc, char **argv)
+int	main(void)
 {
-    int pid;
-    
-    (void)argv;
-    if (argc != 1)
-    {
-        ft_printf("Error\n");
-        return (1);
-    }
-    pid = getpid();
-    ft_printf("%d\n", pid);
-    while (argc == 1)
-	{
-		signal(SIGUSR1, ft_btoa);
-		signal(SIGUSR2, ft_btoa);
-		pause ();
-	}
+	int	pid;
+
+	pid = getpid();
+	ft_printf("PID: %d\n", pid);
+	signal(SIGUSR1, ft_btoa);
+	signal(SIGUSR2, ft_btoa);
+	while (1)
+		pause();
 	return (0);
 }
