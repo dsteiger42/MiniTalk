@@ -1,78 +1,49 @@
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <signal.h>
+#include "minitalk.h"
 
-void	confirm_msg(int signal)
+void	print_error_and_exit(char *message)
 {
-	if (signal == SIGUSR2)
-		ft_printf("Roger that\n");
+	ft_putstr_fd(message, 2);
+	exit(1);
 }
 
-static int	ft_atoi(const char *str)
+void	ft_atob(unsigned char c, int pid)
 {
-	int					i;
-	int					sign;
-	unsigned long int	result;
+	int	bit;
+
+	bit = 0;
+	if (pid < 1 || kill(pid, 0) == -1)
+		print_error_and_exit("wrong pid\n");
+	while (bit < 8)
+	{
+		if (c & (0x01 << bit))
+			kill(pid, SIGUSR1);
+		else
+			kill(pid, SIGUSR2);
+		usleep(1000);
+		bit++;
+	}
+}
+
+int	main(int argc, char *argv[])
+{
+	int				pid;
+	unsigned char	*message;
+	int				i;
 
 	i = 0;
-	sign = 1;
-	result = 0;
-	while (str[i] == 32 || (str[i] >= 9 && str[i] <= 13))
-		i++;
-	if (str[i] == '-')
+	if (argc != 3)
 	{
-		sign = -1;
+		print_error_and_exit("Error: Need a PID and a message\n");
+		return (1);
+	}
+	pid = ft_atoi(argv[1]);
+	message = (unsigned char *)argv[2];
+	while (message[i])
+	{
+		ft_atob(message[i], pid);
 		i++;
 	}
-	else if (str[i] == '+')
-		i++;
-	while (str[i] >= 48 && str[i] <= 57)
-	{
-		result *= 10;
-		result += str[i] - 48;
-		i++;
-	}
-	return (result * sign);
-}
-
-void ft_atob(int pid, char c)
-{
-    int bit;
-
-    bit = 0;
-    while (bit < 8)
-    {
-        if (c & (0x01 << bit))
-            kill(pid, SIGUSR1);
-        else
-            kill(pid, SIGUSR2);
-        usleep(1000);
-        bit++;
-    }
-}
-
-int main(int argc, char **argv)
-{
-    int i;
-    int pid;
-
-    i = 0;
-    if (argc == 3)
-    {
-            pid = atoi(argv[1]);
-            while (argv[2][i])
-            {
-                ft_atob(pid, argv[2][i]);
-                i++;
-            }
-            signal(SIGUSR2, confirm_msg);
-	    	ft_atob(pid, '\0');
-    }
-    else
-    {
-        ft_printf("Error\n");
-        return(1);
-    }
-    return (0);
+	ft_atob('\n', pid);
+	ft_atob(0x00, pid);
+	return (0);
 }
