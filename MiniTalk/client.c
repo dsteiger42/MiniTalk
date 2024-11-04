@@ -1,10 +1,18 @@
 #include "minitalk.h"
 
+void	print_error_and_exit(char *message)
+{
+	ft_putstr_fd(message, 2);
+	exit(1);
+}
+
 void	ft_atob(unsigned char c, int pid)
 {
 	int	bit;
 
 	bit = 0;
+	if (pid < 1 || kill(pid, 0) == -1)
+		print_error_and_exit("wrong pid\n");
 	while (bit < 8)
 	{
 		if (c & (0x01 << bit))
@@ -14,12 +22,6 @@ void	ft_atob(unsigned char c, int pid)
 		usleep(1000);
 		bit++;
 	}
-}
-
-void	print_error_and_exit(char *message)
-{
-	ft_putstr_fd(message, 2);
-	exit(1);
 }
 
 int	main(int argc, char *argv[])
@@ -41,6 +43,7 @@ int	main(int argc, char *argv[])
 		ft_atob(message[i], pid);
 		i++;
 	}
+	ft_atob('\n', pid);
 	ft_atob(0x00, pid);
 	return (0);
 }
